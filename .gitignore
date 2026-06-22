@@ -1,0 +1,50 @@
+# Target build directories
+**/target/
+**/dist/
+**/node/
+
+# Node dependencies
+**/node_modules/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+*.db
+
+# Eclipse IDE
+.settings/
+.project
+.classpath
+.factorypath
+**/.settings/
+**/.project
+**/.classpath
+**/.factorypath
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Log files
+*.log
+logs/
+**/logs/
+
+# Local configuration / secrets
+.env*.local
+application-local.yml
+application-local.properties
+
+# Crash dumps
+drwtsn32.log
+user.dmp

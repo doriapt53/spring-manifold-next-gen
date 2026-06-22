@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: postgres-vector
+    environment:
+      POSTGRES_USER: manifold
+      POSTGRES_PASSWORD: manifold_password
+      POSTGRES_DB: manifold
+    ports:
+      - "5432:5432"
+    volumes:
+      - spring-manifold-pgdata:/var/lib/postgresql/data
+    networks:
+      - spring-manifold-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U manifold"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack:7.4.0-v8
+    container_name: redis-stack
+    environment:
+      REDIS_ARGS: "--requirepass redis_password"
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - spring-manifold-redisdata:/data
+    networks:
+      - spring-manifold-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:0.23.4
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - spring-manifold-ollamadata:/root/.ollama
+    networks:
+      - spring-manifold-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  spring-manifold-network:
+    driver: bridge
+
+volumes:
+  spring-manifold-pgdata:
+    name: spring-manifold-pgdata
+  spring-manifold-redisdata:
+    name: spring-manifold-redisdata
+  spring-manifold-ollamadata:
+    name: spring-manifold-ollamadata
