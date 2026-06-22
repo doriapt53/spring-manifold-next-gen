@@ -80,7 +80,7 @@ Ensure you have the following installed on your machine:
 ### Step-by-Step Setup
 
 #### 1. Start Infrastructure (Docker)
-Spin up the database, cache, and AI engine. Run from the project root:
+Spin up the database, cache, message broker, and AI engine. Run from the project root:
 ```bash
 docker compose up -d
 ```
@@ -88,6 +88,7 @@ docker compose up -d
 * **PostgreSQL (Port 5432)**: For job metadata, schema migrations, and pgvector storage.
 * **Redis (Port 6379 / Insight Port 8001)**: For caching and session management.
 * **Ollama (Port 11434)**: For local embeddings.
+* **Apache Kafka (Port 9092)**: KRaft-mode broker for decoupled, event-driven document processing.
 
 #### 2. Pull the Embedding Model (Ollama)
 The platform is configured to use the `mxbai-embed-large` model for embeddings. You must pull it once:
@@ -123,6 +124,28 @@ npm install
 npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+---
+
+## Scaling Out & Performance
+
+Spring-Manifold Next-Gen is designed for high-throughput, horizontal scalability. Since the ingestion pipeline is decoupled using **Apache Kafka** and the **Claim Check Pattern**, you can scale components independently.
+
+### 1. Scaling the Ingestion / Processing (Output Connector)
+Vector indexing and embedding generation is typically the primary performance bottleneck because of deep learning model inference (Ollama) and database indexing (pgvector).
+* **Kafka Consumer Group Partitioning**: The `manifold-documents` topic is consumed by the `IngestionConsumer` inside the `sm-runtime` service. By configuring the topic with multiple partitions, Kafka will distribute documents among active consumers.
+* **Horizontal Scaling of Runtime Instances**: You can run multiple instances of the `sm-runtime` application sharing the same `spring.application.name` and consumer group (`spring-manifold-vector-group`). Kafka automatically distributes partitions and load-balances the messages.
+* **Ollama Load Balancing**: Scale out embedding generation by pointing `spring.ai.ollama.base-url` to a load balancer (e.g., NGINX, HAProxy) backed by a cluster of Ollama instances running on GPU-enabled nodes.
+
+### 2. Scaling the Repository Connectors (Ingestion Source)
+The scanning/crawling phase can be distributed by splitting large target sources:
+* **Partitioned Scans**: Run separate bootstrap crawl jobs targeting different sub-directories or repository prefixes.
+* **Distributed File Shares / Shared Storage**: In a multi-node setup, ensure the `IngestionConsumer` instances have access to the same shared filesystem (e.g., NFS, S3/MinIO bucket, SMB) as the repository crawlers, so the Claim Check reference (path/URI) can be successfully resolved by the consumer node.
+
+### 3. Claim Check Pattern
+To ensure the messaging system remains fast and responsive:
+1. The **Repository Connector** crawls data, but instead of publishing the entire document content (which could be megabytes of binary data) to Kafka, it saves/references the file on a shared storage medium.
+2. It publishes a lightweight `IngestionMessage` (Claim Check record) to the Kafka topic containing the metadata (URI, file path, version).
+3. The **Consumer Workers** pull the reference, read the file directly from storage, run splitting/chunking, request embeddings, and save the resulting vectors in pgvector.
 
 ---
 
