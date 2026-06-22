@@ -72,7 +72,7 @@ Ensure you have the following installed on your machine:
 #### 1. Start Infrastructure (Docker)
 Spin up the database, cache, and AI engine. Run from the project root:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 **Services started:**
 * **PostgreSQL (Port 5432)**: For job metadata, schema migrations, and pgvector storage.
