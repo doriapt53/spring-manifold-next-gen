@@ -1,5 +1,6 @@
 package org.apache.manifoldcf.runtime;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,6 +21,12 @@ public class SpringManifoldNextGenApplication {
 
     private static final Logger log = LoggerFactory.getLogger(SpringManifoldNextGenApplication.class);
 
+    @Value("${spring.manifold.crawl-on-startup:false}")
+    private boolean crawlOnStartup;
+
+    @Value("${spring.manifold.scan-path:}")
+    private String scanPath;
+
     @Bean
     @Profile("!test")
     public CommandLineRunner runSampleJob(
@@ -31,13 +38,16 @@ public class SpringManifoldNextGenApplication {
             log.info("Detected Repository Connector: {}", repositoryConnector.getName());
             log.info("Detected Output Connector: {}", outputConnector.getName());
 
-            // Example path to scan - can be overridden by application properties
-            String scanPath = System.getProperty("user.home") + "/Desktop/mcf-test"; 
-            
-            log.info("Triggering sample crawl job on path: {}", scanPath);
-            
-            // Run the job using the Virtual Thread-based orchestrator
-            orchestrator.runJob(repositoryConnector, outputConnector, scanPath);
+            if (crawlOnStartup) {
+                if (scanPath == null || scanPath.isBlank()) {
+                    log.warn("Crawl on startup is enabled, but spring.manifold.scan-path is not set. Skipping sample crawl.");
+                } else {
+                    log.info("Triggering sample crawl job on path: {}", scanPath);
+                    orchestrator.runJob(repositoryConnector, outputConnector, scanPath);
+                }
+            } else {
+                log.info("Sample crawl job on startup is disabled. Use properties to enable it (spring.manifold.crawl-on-startup=true).");
+            }
             
             log.info("--- Bootstrap sequence completed ---");
         };
