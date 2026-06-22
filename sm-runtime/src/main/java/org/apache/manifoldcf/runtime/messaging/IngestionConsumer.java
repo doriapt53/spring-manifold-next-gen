@@ -24,7 +24,12 @@ public class IngestionConsumer {
         this.outputConnector = outputConnector;
     }
 
-    @KafkaListener(topics = KafkaConfig.TOPIC_NAME, groupId = "spring-manifold-vector-group")
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        log.info("IngestionConsumer bean instantiated successfully!");
+    }
+
+    @KafkaListener(topics = KafkaConfig.TOPIC_NAME)
     public void consume(IngestionMessage message) {
         log.info("Received document message from Kafka: {}", message.documentId());
         try {

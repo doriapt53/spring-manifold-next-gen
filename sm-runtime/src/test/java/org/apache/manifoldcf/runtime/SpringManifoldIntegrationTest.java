@@ -21,7 +21,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.kafka.consumer.group-id=test-group-${random.uuid}"
+})
 @ActiveProfiles("test")
 class SpringManifoldIntegrationTest {
 
@@ -53,18 +55,23 @@ class SpringManifoldIntegrationTest {
         // 2. Run the job orchestrator on the temporary directory
         jobOrchestrator.runJob(repositoryConnector, outputConnector, tempDir.toString());
 
-        // Give some time for the async Kafka consumer to process and persist
-        Thread.sleep(3000);
-
-        // 3. Verify the content in the Vector Store using a similarity search
-        log.info("Performing similarity search for 'document orchestration'...");
-        List<Document> results = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query("document orchestration")
-                        .topK(5)
-                        .similarityThreshold(0.1) // Lower threshold to ensure we find it
-                        .build()
-        );
+        // 3. Verify the content in the Vector Store using a similarity search with retries
+        log.info("Performing similarity search for 'document orchestration' with retries...");
+        List<Document> results = List.of();
+        for (int i = 0; i < 15; i++) {
+            results = vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query("document orchestration")
+                            .topK(5)
+                            .similarityThreshold(0.1) // Lower threshold to ensure we find it
+                            .build()
+            );
+            if (!results.isEmpty()) {
+                log.info("Found document in Vector Store after {} seconds.", i);
+                break;
+            }
+            Thread.sleep(1000); // Wait 1 second before retrying
+        }
 
         log.info("Found {} results in Vector Store.", results.size());
         results.forEach(doc -> log.info("Result Match: [Score: {}] Content: {}", doc.getMetadata().get("similarity_score"), doc.getText()));

@@ -43,8 +43,8 @@ public class JobOrchestrator {
                                 doc.lastModified().toString()
                             );
                             
-                            // Publish document metadata to Kafka topic
-                            kafkaTemplate.send(KafkaConfig.TOPIC_NAME, doc.id(), msg);
+                            // Publish document metadata to Kafka topic and wait for confirmation
+                            kafkaTemplate.send(KafkaConfig.TOPIC_NAME, doc.id(), msg).get();
                             log.info("Published document reference to Kafka: {}", doc.id());
                             
                             return reactor.core.publisher.Mono.just((ScanResult) new ScanResult.Success(doc.id(), "1.0"));
